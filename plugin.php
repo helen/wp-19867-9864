@@ -157,11 +157,20 @@ class WP_19867 {
 		} else {
 			$id = $r['id'] ? "id='" . esc_attr( $r['id'] ) . "'" : "id='$name'";
 		}
-		$output = sprintf( "<input name='%s' %s class='%s' data-placeholder='%s' type='hidden'>",
+
+
+		if ( $r['selected'] ) {
+			$user = get_userdata( $r['selected'] );
+			$selected_show = $user->get( $r['show'] );
+		}
+
+		$output = sprintf( "<input name='%s' %s class='%s' data-placeholder='%s' %s type='hidden' %s>",
 			$name,
 			$id,
 			$r['class'],
-			__( 'Select a user' ) );
+			__( 'Select a user' ),
+			$r['selected'] ? sprintf( "value='%s'", $r['selected'] ) : '',
+			$r['selected'] ? sprintf( "data-selected-show='%s'", $selected_show ) : '' );
 
 		/**
 		 * Filter the wp_dropdown_users() HTML output.
@@ -221,7 +230,9 @@ class WP_19867 {
 				);
 			}
 		}
-		wp_send_json_success( array( 'users' => $_users ) );
+		$count_users = count_users();
+
+		wp_send_json_success( array( 'users' => $_users, 'total' => $count_users['total_users'] ) );
 	}
 }
 

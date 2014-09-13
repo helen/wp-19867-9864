@@ -1,5 +1,11 @@
 (function($) {
 	$('#post_author_override').select2({
+		// @todo: override default CSS of .select2-container instead.
+		width: '100%',
+		initSelection: function(element, callback) {
+			var data = { id: element.val(), text: element.data('selected-show') };
+			callback(data);
+		},
 		/**
 		 * Use a custom WordPress endpoint for querying users.
 		 */
@@ -29,7 +35,9 @@
 			 * @return objet
 			 */
 			results: function (data, page) {
-				return { results: data.data.users };
+				var more = (page * 10) < data.data.total;
+
+				return { results: data.data.users, more: more };
 			}
 		}
 	});
