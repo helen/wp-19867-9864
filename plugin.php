@@ -14,6 +14,7 @@ class WP_19867 {
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_menu' ), 9999 );
 		add_action( 'admin_head', array( $this, 'admin_head' ) );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
+		add_action( 'wp_ajax_get_users', array( $this, 'get_users' ) );
 	}
 
 	public function admin_bar_menu() {
@@ -122,6 +123,12 @@ class WP_19867 {
 	 * @return string|null Null on display. String of HTML content on retrieve.
 	 */
 	public function wp_dropdown_users( $args = '' ) {
+		/**
+		 * @todo localize settings separately for each instance of the dropdown,
+		 * including the $show param passed into $args, which we'll pass off to
+		 * the AJAX users() call, which will pass to the WP_User_Query?
+		 */
+		$this->enqueue_scripts();
 		$defaults = array(
 			'show_option_all' => '', 'show_option_none' => '', 'hide_if_only_one_author' => '',
 			'orderby' => 'display_name', 'order' => 'ASC',
@@ -144,45 +151,17 @@ class WP_19867 {
 		$query_args['fields'] = array( 'ID', 'user_login', $show );
 		$users = get_users( $query_args );
 
-		$output = '';
-		if ( ! empty( $users ) && ( empty( $r['hide_if_only_one_author'] ) || count( $users ) > 1 ) ) {
-			$name = esc_attr( $r['name'] );
-			if ( $r['multi'] && ! $r['id'] ) {
-				$id = '';
-			} else {
-				$id = $r['id'] ? " id='" . esc_attr( $r['id'] ) . "'" : " id='$name'";
-			}
-			$output = "<select name='{$name}'{$id} class='" . $r['class'] . "'>\n";
-
-			if ( $show_option_all ) {
-				$output .= "\t<option value='0'>$show_option_all</option>\n";
-			}
-
-			if ( $show_option_none ) {
-				$_selected = selected( $option_none_value, $r['selected'], false );
-				$output .= "\t<option value='" . esc_attr( $option_none_value ) . "'$_selected>$show_option_none</option>\n";
-			}
-
-			$found_selected = false;
-			foreach ( (array) $users as $user ) {
-				$user->ID = (int) $user->ID;
-				$_selected = selected( $user->ID, $r['selected'], false );
-				if ( $_selected ) {
-					$found_selected = true;
-				}
-				$display = ! empty( $user->$show ) ? $user->$show : '('. $user->user_login . ')';
-				$output .= "\t<option value='$user->ID'$_selected>" . esc_html( $display ) . "</option>\n";
-			}
-
-			if ( $r['include_selected'] && ! $found_selected && ( $r['selected'] > 0 ) ) {
-				$user = get_userdata( $r['selected'] );
-				$_selected = selected( $user->ID, $r['selected'], false );
-				$display = ! empty( $user->$show ) ? $user->$show : '('. $user->user_login . ')';
-				$output .= "\t<option value='$user->ID'$_selected>" . esc_html( $display ) . "</option>\n";
-			}
-
-			$output .= "</select>";
+		$name = esc_attr( $r['name'] );
+		if ( $r['multi'] && ! $r['id'] ) {
+			$id = '';
+		} else {
+			$id = $r['id'] ? "id='" . esc_attr( $r['id'] ) . "'" : "id='$name'";
 		}
+		$output = sprintf( "<input name='%s' %s class='%s' data-placeholder='%s' type='hidden'>",
+			$name,
+			$id,
+			$r['class'],
+			__( 'Select a user' ) );
 
 		/**
 		 * Filter the wp_dropdown_users() HTML output.
@@ -197,6 +176,52 @@ class WP_19867 {
 			echo $html;
 		}
 		return $html;
+	}
+
+	/**
+	 * Enqueue Select2 and the implementation script.
+	 */
+	public function enqueue_scripts() {
+		wp_enqueue_style( 'select2', plugins_url( 'includes/vendor/select2-3.5.1/select2.css', __FILE__ ) );
+		wp_enqueue_script( 'select2', plugins_url( 'includes/vendor/select2-3.5.1/select2.js', __FILE__ ), array( 'jquery' ) );
+		wp_enqueue_script( 'wp-select2', plugins_url( 'includes/js/wp-select2.js', __FILE__ ), array( 'jquery', 'select2', 'wp-util' ) );
+	}
+
+	/**
+	 * AJAX endpoint handler for querying users.
+	 */
+	public function get_users() {
+		// @todo consider proper capability check.
+		if ( ! current_user_can( 'read' ) )
+			wp_send_json_error();
+
+		$args = array(
+			'orderby' => 'display_name',
+			'number' => '10'
+		);
+
+		if ( ! empty( $_REQUEST['search'] ) ) {
+			$args['search'] = $_REQUEST['search'] . '*';
+			$args['search_columns'] = array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename' );
+		}
+
+		$page = intval( $_REQUEST['page'] ) - 1;
+		if ( $page )
+			$args['offset'] = $page * 10;
+
+		$query = new WP_User_Query( $args );
+		$users = $query->get_results();
+		$_users = array();
+		if ( ! empty( $users ) ) {
+			foreach ( $users as $user ) {
+				$_users[] = array(
+					'id' => $user->data->ID,
+					// @todo support wp_dropdown_users( array( 'show' => 'login' ) )
+					'text' => $user->data->display_name
+				);
+			}
+		}
+		wp_send_json_success( array( 'users' => $_users ) );
 	}
 }
 
