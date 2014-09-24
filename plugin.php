@@ -225,7 +225,7 @@ class WP_19867 {
 				$r['selected'] ? sprintf( "value='%s'", $r['selected'] ) : '',
 				$r['selected'] ? sprintf( "data-selected-show='%s'", $selected_show ) : '' );
 		} else { // Create a basic HTML <select> dropdown.
-			$output = "<select name='{$name}'{$id} class='" . $r['class'] . ">\n";
+			$output = "<select name='{$name}'{$id} class='" . $r['class'] . "'>\n";
 			if ( $show_option_all )
 				$output .= "\t<option value='0'>$show_option_all</option>\n";
 			if ( $show_option_none ) {
