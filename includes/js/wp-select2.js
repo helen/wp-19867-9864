@@ -1,6 +1,6 @@
 (function($) {
 	// Expose a jQuery widget for an AJAX-powered authors dropdown.
-	$.widget( 'wp.usersDropdown', {
+	$.widget( 'wp.wpUsersDropdown', {
 		_create: function() {
 			var self = this;
 
@@ -56,5 +56,5 @@
 		}
 	});
 	//Turn any element with the `.wp-users-dropdown` class into a Select2 dropdown.
-	$('.wp-users-dropdown').usersDropdown();
+	$('.wp-users-dropdown').wpUsersDropdown();
 })(jQuery);
