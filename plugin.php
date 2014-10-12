@@ -194,6 +194,7 @@ class WP_19867 {
 			wp_enqueue_script( 'wp-select2', plugins_url( 'includes/js/wp-select2.js', __FILE__ ), array( 'jquery', 'select2', 'wp-util' ) );
 
 			// Localize Select2 strings.
+			//
 			// @todo - preferably this would be glued to select2, but script data
 			// is output before the script, here we need it output after.
 			//
@@ -217,10 +218,10 @@ class WP_19867 {
 					show: "' . $show . '"
 				};' );
 
-			$output = sprintf( "<input name='%s' %s class='%s' data-placeholder='%s' %s type='text' %s>",
+			$output = sprintf( "<input name='%s' %s class='%s' data-dropdown-type='users' data-placeholder='%s' %s type='text' %s>",
 				$name,
 				$id,
-				'wp-users-dropdown ' . $r['class'],
+				'wp-select-dropdown ' . $r['class'],
 				$show_option_all ? $show_option_all : __( 'Select a user' ),
 				$r['selected'] ? sprintf( "value='%s'", $r['selected'] ) : '',
 				$r['selected'] ? sprintf( "data-selected-show='%s'", $selected_show ) : '' );
