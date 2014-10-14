@@ -3,9 +3,7 @@
  Plugin Name: wp-19867-9864
  Plugin URI: https://github.com/helenhousandi/wp-19867-9864
  Description: Plugin-to-patch development for #19867 and #9864.
- Author: helen
  Version: 0.1
- Author URI: http://helenhousandi.com
  */
 
 // This is really a namespacing class, deal.
