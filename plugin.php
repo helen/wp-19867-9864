@@ -209,7 +209,8 @@ class WP_19867 {
 				});' );
 
 			$wp_scripts->add_data( 'wp-select2', 'data',
-				'window.wp.select2 = window.wp.select2 || {};
+				'window.wp = window.wp || {};
+				window.wp.select2 = window.wp.select2 || {};
 				window.wp.select2["' . $name . '"] = {
 					queryArgs: ' . json_encode( $query_args ) . ',
 					show: "' . $show . '"
